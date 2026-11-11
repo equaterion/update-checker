@@ -12,7 +12,7 @@ CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID") or "@blyakadaL"
 TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 STATE_FILE = "state.json"
 MSK = timezone(timedelta(hours=3))
-DAILY_HOUR = 12
+DAILY_HOUR = 0
 
 
 def load_state():
