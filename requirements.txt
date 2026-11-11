@@ -1,0 +1,3 @@
+steam[client]
+Pillow
+requests
