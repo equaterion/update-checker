@@ -1,4 +1,4 @@
-name: blyakada
+name: update-checker
 
 on:
   schedule:
