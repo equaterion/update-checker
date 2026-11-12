@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from datetime import date, datetime, timedelta, timezone
@@ -52,6 +53,64 @@ def get_app_info():
     }
 
 
+def get_store_info():
+    response = requests.get(
+        "https://store.steampowered.com/api/appdetails",
+        params={"appids": APPID, "l": "english", "cc": "us"},
+        headers={"User-Agent": "Mozilla/5.0"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    data = response.json()[str(APPID)]["data"]
+    text = "".join(
+        data.get(key, "")
+        for key in ("detailed_description", "short_description", "about_the_game")
+    )
+    details = {
+        key: data.get(key)
+        for key in (
+            "name",
+            "release_date",
+            "developers",
+            "publishers",
+            "genres",
+            "categories",
+            "platforms",
+            "supported_languages",
+            "website",
+            "legal_notice",
+            "pc_requirements",
+            "mac_requirements",
+            "linux_requirements",
+            "content_descriptors",
+            "ratings",
+            "required_age",
+            "is_free",
+            "type",
+        )
+    }
+    return {
+        "trailers": sorted(
+            f"{movie.get('id')}:{movie.get('highlight')}" for movie in data.get("movies", [])
+        ),
+        "screenshots": [shot.get("path_full") for shot in data.get("screenshots", [])],
+        "description": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "images": [
+            data.get(key)
+            for key in (
+                "header_image",
+                "capsule_image",
+                "capsule_imagev5",
+                "background",
+                "background_raw",
+            )
+        ],
+        "details": hashlib.sha256(
+            json.dumps(details, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+    }
+
+
 def load_font(size):
     for path in (
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -96,9 +155,22 @@ def send_photo(text, caption):
     response.raise_for_status()
 
 
+def send_message(text):
+    response = requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        data={"chat_id": CHAT_ID, "text": text},
+        timeout=30,
+    )
+    response.raise_for_status()
+
+
 def main():
     state = load_state()
     info = get_app_info()
+    try:
+        store = get_store_info()
+    except Exception:
+        store = None
     now = datetime.now(MSK)
     today = now.date().isoformat()
 
@@ -106,6 +178,8 @@ def main():
         state["buildid"] = info["buildid"]
         state["manifests"] = info["manifests"]
         state["last_update"] = datetime.fromtimestamp(info["timeupdated"], MSK).date().isoformat()
+        if store:
+            state["store"] = store
         save_state(state)
     elif state["buildid"] != info["buildid"] or state.get("manifests") != info["manifests"]:
         old_build = state["buildid"]
@@ -117,6 +191,17 @@ def main():
         state["manifests"] = info["manifests"]
         state["last_update"] = today
         state["last_daily"] = today
+        if store:
+            state["store"] = store
+        save_state(state)
+    elif store:
+        old_store = state.get("store") or {}
+        changed = [key for key in store if key in old_store and old_store[key] != store[key]]
+        state["store"] = store
+        if changed:
+            send_message(
+                "Store page updated\n\n" + "\n".join(f"- {key}" for key in changed)
+            )
         save_state(state)
 
     if now.hour >= DAILY_HOUR and state.get("last_daily") != today:
