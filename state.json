@@ -4,5 +4,28 @@
     "1049801": "3333166222065429158"
   },
   "last_update": "2026-06-29",
-  "last_daily": "2026-11-12"
+  "last_daily": "2026-11-12",
+  "store": {
+    "trailers": [
+      "256745301:True"
+    ],
+    "screenshots": [
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_753e74d9511a4f2cc78fdd35ce6df952af301c7b.1920x1080.jpg?t=1771860827",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_9060a7971429cf21ac520748f0450199418522dd.1920x1080.jpg?t=1771860827",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_c4af75bb0370a9f30c8324bee6e71bae48f43c75.1920x1080.jpg?t=1771860827",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_9c11d93134162b68a1b755cc6e9da4dadfc895ed.1920x1080.jpg?t=1771860827",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_a7dc3717b50e8bd183f8d3216d2dfc3ee639ea16.1920x1080.jpg?t=1771860827",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_bd22ef53becfe1ceb8f433d8ba16f923bf2f464e.1920x1080.jpg?t=1771860827",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_3a0561f8698c3838d466281c3f4262e7d76c7862.1920x1080.jpg?t=1771860827"
+    ],
+    "description": "f4bc2456d8aa7a74e48304def3c2bba3f9b5d6bf0190d1ae7c7113339270dc9c",
+    "images": [
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/header.jpg?t=1771860827",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/capsule_231x87.jpg?t=1771860827",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/capsule_184x69.jpg?t=1771860827",
+      "https://store.akamai.steamstatic.com/images/storepagebackground/app/1049800?t=1771860827",
+      "https://store.akamai.steamstatic.com/images/storepagebackground/app/1049800?t=1771860827"
+    ],
+    "details": "73a9bcaf969abbee95e7b9b9c8dd367aa6b1e8b5e7be90d417174f51a8c8f852"
+  }
 }
