@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import time
 from datetime import date, datetime, timedelta, timezone
 from io import BytesIO
 
@@ -33,11 +34,14 @@ def save_state(state):
 
 def get_app_info():
     client = SteamClient()
-    client.anonymous_login()
     try:
+        client.anonymous_login()
         data = client.get_product_info(apps=[APPID], timeout=30)
     finally:
-        client.logout()
+        try:
+            client.logout()
+        except Exception:
+            pass
     app = data["apps"][APPID]
     branch = app["depots"]["branches"]["public"]
     manifests = {}
@@ -112,6 +116,18 @@ def get_store_info():
     }
 
 
+def retry(func, attempts=3, delay=10):
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return func(), attempt
+        except Exception as error:
+            last_error = error
+            if attempt < attempts:
+                time.sleep(delay)
+    raise RuntimeError(f"{func.__name__} failed after {attempts} attempts: {last_error}") from last_error
+
+
 def load_font(size):
     for path in (
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -183,17 +199,19 @@ def main():
     state = load_state()
     now = datetime.now(MSK)
     today = now.date().isoformat()
-    info = get_app_info()
+    info, steam_attempt = retry(get_app_info)
     store_error = None
     try:
-        store = get_store_info()
+        store, store_attempt = retry(get_store_info)
     except Exception as error:
         store = None
+        store_attempt = 3
         store_error = str(error)
 
     updated = False
     daily = False
     changed = []
+    old_build = None
 
     if not state.get("buildid"):
         state["buildid"] = info["buildid"]
@@ -234,19 +252,39 @@ def main():
         save_state(state)
         daily = True
 
+    last_update_date = date.fromisoformat(state["last_update"])
+    days_without_update = (now.date() - last_update_date).days + 1
+    update_line = f"update: yes ({old_build} -> {info['buildid']})" if updated else "update: no"
+
     lines = [
-        f"Check {now.strftime('%Y-%m-%d %H:%M')} MSK",
+        f"Check {now.strftime('%Y-%m-%d %H:%M:%S')} MSK / {now.astimezone(timezone.utc).strftime('%H:%M:%S')} UTC",
         "",
+        f"appid: {APPID}",
         f"build: {info['buildid']}",
         "manifests: " + ", ".join(f"{key}={value}" for key, value in info["manifests"].items()),
+        f"steam_attempt: {steam_attempt}/3",
+        f"store_attempt: {store_attempt}/3",
+        "",
         f"store: {'error' if store_error else 'ok'}",
-        f"update: {'yes' if updated else 'no'}",
-        f"daily: {'yes' if daily else 'no'}",
     ]
-    if changed:
-        lines.append(f"changed: {', '.join(changed)}")
+    if store:
+        lines.append(f"trailers: {len(store['trailers'])}")
+        lines.append(f"screenshots: {len(store['screenshots'])}")
+    lines.append(f"changed: {', '.join(changed) if changed else 'none'}")
     if store_error:
-        lines.append(f"error: {store_error}")
+        lines.append(f"store_error: {store_error}")
+    lines.extend(
+        [
+            "",
+            update_line,
+            f"last_update: {state['last_update']}",
+            f"days_without_update: {days_without_update}",
+            "",
+            f"daily: {'yes' if daily else 'no'}",
+            f"last_daily: {state.get('last_daily') or 'none'}",
+            f"today: {today}",
+        ]
+    )
     send_log("\n".join(lines))
 
 
