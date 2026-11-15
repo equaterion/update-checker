@@ -10,6 +10,7 @@ from steam.client import SteamClient
 
 APPID = 1049800
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID") or "@blyakadaL"
+ADMIN_CHAT_ID = os.environ.get("TELEGRAM_ADMIN_CHAT_ID")
 TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 STATE_FILE = "state.json"
 MSK = timezone(timedelta(hours=3))
@@ -164,15 +165,35 @@ def send_message(text):
     response.raise_for_status()
 
 
+def send_log(text):
+    if not ADMIN_CHAT_ID:
+        return
+    try:
+        response = requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+            data={"chat_id": ADMIN_CHAT_ID, "text": text},
+            timeout=30,
+        )
+        response.raise_for_status()
+    except Exception:
+        pass
+
+
 def main():
     state = load_state()
-    info = get_app_info()
-    try:
-        store = get_store_info()
-    except Exception:
-        store = None
     now = datetime.now(MSK)
     today = now.date().isoformat()
+    info = get_app_info()
+    store_error = None
+    try:
+        store = get_store_info()
+    except Exception as error:
+        store = None
+        store_error = str(error)
+
+    updated = False
+    daily = False
+    changed = []
 
     if not state.get("buildid"):
         state["buildid"] = info["buildid"]
@@ -194,6 +215,7 @@ def main():
         if store:
             state["store"] = store
         save_state(state)
+        updated = True
     elif store:
         old_store = state.get("store") or {}
         changed = [key for key in store if key in old_store and old_store[key] != store[key]]
@@ -210,7 +232,27 @@ def main():
         send_photo("Обнова не вышла", f"День {days} без обновления.")
         state["last_daily"] = today
         save_state(state)
+        daily = True
+
+    lines = [
+        f"Check {now.strftime('%Y-%m-%d %H:%M')} MSK",
+        "",
+        f"build: {info['buildid']}",
+        "manifests: " + ", ".join(f"{key}={value}" for key, value in info["manifests"].items()),
+        f"store: {'error' if store_error else 'ok'}",
+        f"update: {'yes' if updated else 'no'}",
+        f"daily: {'yes' if daily else 'no'}",
+    ]
+    if changed:
+        lines.append(f"changed: {', '.join(changed)}")
+    if store_error:
+        lines.append(f"error: {store_error}")
+    send_log("\n".join(lines))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as error:
+        send_log(f"Check failed\n\n{error}")
+        raise
