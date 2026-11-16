@@ -6,9 +6,23 @@
   "last_update": "2026-06-29",
   "last_daily": "2026-11-17",
   "store": {
-    "trailers": [
-      "256745301:True"
-    ],
+    "version": 2,
+    "categories": {
+      "category_1": "Multi-player",
+      "category_49": "PvP",
+      "category_36": "Online PvP",
+      "category_35": "In-App Purchases",
+      "category_62": "Family Sharing"
+    },
+    "genres": {
+      "genre_1": "Action",
+      "genre_23": "Indie",
+      "genre_29": "Massively Multiplayer",
+      "genre_37": "Free To Play"
+    },
+    "movies": {
+      "movie_256745301": "BLOCKADE CLASSIC PROMO"
+    },
     "screenshots": [
       "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_753e74d9511a4f2cc78fdd35ce6df952af301c7b.1920x1080.jpg?t=1771860827",
       "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_9060a7971429cf21ac520748f0450199418522dd.1920x1080.jpg?t=1771860827",
@@ -18,14 +32,68 @@
       "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_bd22ef53becfe1ceb8f433d8ba16f923bf2f464e.1920x1080.jpg?t=1771860827",
       "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/ss_3a0561f8698c3838d466281c3f4262e7d76c7862.1920x1080.jpg?t=1771860827"
     ],
-    "description": "f4bc2456d8aa7a74e48304def3c2bba3f9b5d6bf0190d1ae7c7113339270dc9c",
-    "images": [
-      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/header.jpg?t=1771860827",
-      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/capsule_231x87.jpg?t=1771860827",
-      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/capsule_184x69.jpg?t=1771860827",
-      "https://store.akamai.steamstatic.com/images/storepagebackground/app/1049800?t=1771860827",
-      "https://store.akamai.steamstatic.com/images/storepagebackground/app/1049800?t=1771860827"
-    ],
-    "details": "a2fc9d793da816be0b3d9d0581c1dfcc76382793a7360ac7518777d8c6014415"
+    "description": {
+      "hash": "f4bc2456d8aa7a74e48304def3c2bba3f9b5d6bf0190d1ae7c7113339270dc9c",
+      "length": 2193
+    },
+    "images": {
+      "header": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/header.jpg?t=1771860827",
+      "capsule": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/capsule_231x87.jpg?t=1771860827",
+      "capsule_v5": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1049800/capsule_184x69.jpg?t=1771860827",
+      "background": "https://store.akamai.steamstatic.com/images/storepagebackground/app/1049800?t=1771860827",
+      "background_raw": "https://store.akamai.steamstatic.com/images/storepagebackground/app/1049800?t=1771860827"
+    },
+    "details": {
+      "name": "BLOCKADE",
+      "release_date": {
+        "coming_soon": false,
+        "date": "May 21, 2019"
+      },
+      "developers": [
+        "Novalink"
+      ],
+      "publishers": [
+        "Novalink"
+      ],
+      "platforms": {
+        "windows": true,
+        "mac": false,
+        "linux": false
+      },
+      "supported_languages": "aecc0bbba766fa28d90a77b79f958b32dd218d2fa179ef4fbdf6626b556a3fa6",
+      "website": null,
+      "legal_notice": "d2f87ca7d750dfdd5e1a5a025d7a79ccf0e4111ba05e52a513741cf00644b373",
+      "pc_requirements": "ede3e9171e253733bc283793eabc362ef008a524b282d0a023ff7bdab4939830",
+      "mac_requirements": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "linux_requirements": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "content_descriptors": {
+        "ids": [],
+        "notes": null
+      },
+      "ratings": {
+        "dejus": {
+          "rating": "14",
+          "descriptors": "Violência fantasiosa\r\nViolência",
+          "use_age_gate": "true",
+          "required_age": "14"
+        },
+        "steam_germany": {
+          "rating_generated": "1",
+          "rating": "12",
+          "required_age": "12",
+          "banned": "0",
+          "use_age_gate": "0",
+          "descriptors": "Fantasy-Gewalt"
+        }
+      },
+      "required_age": 0,
+      "type": "game"
+    },
+    "monetization": {
+      "is_free": true,
+      "price": null,
+      "packages": [],
+      "dlc": []
+    }
   }
 }
