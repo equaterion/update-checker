@@ -71,49 +71,222 @@ def get_store_info():
         data.get(key, "")
         for key in ("detailed_description", "short_description", "about_the_game")
     )
-    details = {
-        key: data.get(key)
-        for key in (
-            "name",
-            "release_date",
-            "developers",
-            "publishers",
-            "genres",
-            "categories",
-            "platforms",
-            "supported_languages",
-            "website",
-            "legal_notice",
-            "pc_requirements",
-            "mac_requirements",
-            "linux_requirements",
-            "content_descriptors",
-            "ratings",
-            "required_age",
-            "is_free",
-            "type",
-        )
-    }
+    price = data.get("price_overview")
+    packages = sorted(
+        str(sub.get("packageid"))
+        for group in data.get("package_groups") or []
+        for sub in group.get("subs") or []
+        if sub.get("packageid") is not None
+    )
     return {
-        "trailers": sorted(
-            f"{movie.get('id')}:{movie.get('highlight')}" for movie in data.get("movies", [])
-        ),
-        "screenshots": [shot.get("path_full") for shot in data.get("screenshots", [])],
-        "description": hashlib.sha256(text.encode("utf-8")).hexdigest(),
-        "images": [
-            data.get(key)
-            for key in (
-                "header_image",
-                "capsule_image",
-                "capsule_imagev5",
-                "background",
-                "background_raw",
-            )
-        ],
-        "details": hashlib.sha256(
-            json.dumps(details, sort_keys=True, ensure_ascii=False).encode("utf-8")
-        ).hexdigest(),
+        "version": 2,
+        "categories": {
+            f"category_{category.get('id')}": category.get("description")
+            for category in data.get("categories") or []
+        },
+        "genres": {
+            f"genre_{genre.get('id')}": genre.get("description")
+            for genre in data.get("genres") or []
+        },
+        "movies": {
+            f"movie_{movie.get('id')}": movie.get("name")
+            for movie in data.get("movies") or []
+        },
+        "screenshots": [shot.get("path_full") for shot in data.get("screenshots") or []],
+        "description": {
+            "hash": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            "length": len(text),
+        },
+        "images": {
+            "header": data.get("header_image"),
+            "capsule": data.get("capsule_image"),
+            "capsule_v5": data.get("capsule_imagev5"),
+            "background": data.get("background"),
+            "background_raw": data.get("background_raw"),
+        },
+        "details": {
+            "name": data.get("name"),
+            "release_date": data.get("release_date"),
+            "developers": data.get("developers"),
+            "publishers": data.get("publishers"),
+            "platforms": data.get("platforms"),
+            "supported_languages": hashlib.sha256(
+                str(data.get("supported_languages", "")).encode("utf-8")
+            ).hexdigest(),
+            "website": data.get("website"),
+            "legal_notice": hashlib.sha256(
+                str(data.get("legal_notice", "")).encode("utf-8")
+            ).hexdigest(),
+            "pc_requirements": hashlib.sha256(
+                str(data.get("pc_requirements", "")).encode("utf-8")
+            ).hexdigest(),
+            "mac_requirements": hashlib.sha256(
+                str(data.get("mac_requirements", "")).encode("utf-8")
+            ).hexdigest(),
+            "linux_requirements": hashlib.sha256(
+                str(data.get("linux_requirements", "")).encode("utf-8")
+            ).hexdigest(),
+            "content_descriptors": data.get("content_descriptors"),
+            "ratings": data.get("ratings"),
+            "required_age": data.get("required_age"),
+            "type": data.get("type"),
+        },
+        "monetization": {
+            "is_free": data.get("is_free"),
+            "price": {
+                "currency": price.get("currency"),
+                "initial": price.get("initial"),
+            }
+            if price
+            else None,
+            "packages": packages,
+            "dlc": sorted(str(item) for item in data.get("dlc") or []),
+        },
     }
+
+
+HASHED_DETAILS = {
+    "supported_languages",
+    "legal_notice",
+    "pc_requirements",
+    "mac_requirements",
+    "linux_requirements",
+}
+
+
+def display(value):
+    if value is None:
+        return "none"
+    if isinstance(value, dict):
+        return ", ".join(f"{key}={value[key]}" for key in value)
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value)
+    return str(value)
+
+
+def display_price(price):
+    if not price or price.get("initial") is None:
+        return "none"
+    return f"{price['initial'] / 100:.2f} {price.get('currency')}"
+
+
+def diff_named(old, new):
+    lines = []
+    for key in sorted(set(old) | set(new)):
+        if old.get(key) == new.get(key):
+            continue
+        if key not in old:
+            lines.append(f"Added {key}: {new[key]}")
+        elif key not in new:
+            lines.append(f"Removed {key}: {old[key]}")
+        else:
+            lines.append(f"Changed {key}: {old[key]} -> {new[key]}")
+    return lines
+
+
+def diff_keys(old, new):
+    lines = []
+    for key in sorted(set(old) | set(new)):
+        if old.get(key) == new.get(key):
+            continue
+        if key not in old:
+            lines.append(f"Added {key}")
+        elif key not in new:
+            lines.append(f"Removed {key}")
+        else:
+            lines.append(f"Changed {key}")
+    return lines
+
+
+def diff_details(old, new):
+    lines = []
+    for key in sorted(set(old) | set(new)):
+        if old.get(key) == new.get(key):
+            continue
+        if key in HASHED_DETAILS:
+            lines.append(f"Changed {key}")
+        elif key not in old:
+            lines.append(f"Added {key}: {display(new[key])}")
+        elif key not in new:
+            lines.append(f"Removed {key}: {display(old[key])}")
+        else:
+            lines.append(f"Changed {key}: {display(old[key])} -> {display(new[key])}")
+    return lines
+
+
+def describe_store_changes(old, new):
+    sections = []
+
+    for key, title in (
+        ("categories", "Changed Store Categories"),
+        ("genres", "Changed Store Genres"),
+        ("movies", "Changed Store Trailers"),
+    ):
+        lines = diff_named(old.get(key) or {}, new.get(key) or {})
+        if lines:
+            sections.append((title, lines))
+
+    old_shots = old.get("screenshots") or []
+    new_shots = new.get("screenshots") or []
+    if old_shots != new_shots:
+        added = len(set(new_shots) - set(old_shots))
+        removed = len(set(old_shots) - set(new_shots))
+        lines = []
+        if added:
+            lines.append(f"Added {added} ({len(new_shots)} total)")
+        if removed:
+            lines.append(f"Removed {removed} ({len(new_shots)} total)")
+        if lines:
+            sections.append(("Changed Store Screenshots", lines))
+
+    if old.get("description") != new.get("description"):
+        old_length = (old.get("description") or {}).get("length")
+        new_length = (new.get("description") or {}).get("length")
+        sections.append(
+            (
+                "Changed Store Description",
+                [f"Changed description ({old_length} -> {new_length} chars)"],
+            )
+        )
+
+    lines = diff_keys(old.get("images") or {}, new.get("images") or {})
+    if lines:
+        sections.append(("Changed Store Images", lines))
+
+    lines = diff_details(old.get("details") or {}, new.get("details") or {})
+    if lines:
+        sections.append(("Changed Store Details", lines))
+
+    old_money = old.get("monetization") or {}
+    new_money = new.get("monetization") or {}
+    lines = []
+    for key in ("is_free", "price"):
+        if old_money.get(key) != new_money.get(key):
+            if key == "price":
+                old_value = display_price(old_money.get(key))
+                new_value = display_price(new_money.get(key))
+            else:
+                old_value = display(old_money.get(key))
+                new_value = display(new_money.get(key))
+            lines.append(f"Changed {key}: {old_value} -> {new_value}")
+    for key in ("packages", "dlc"):
+        old_items = old_money.get(key) or []
+        new_items = new_money.get(key) or []
+        for item in sorted(set(new_items) - set(old_items)):
+            lines.append(f"Added {key}: {item}")
+        for item in sorted(set(old_items) - set(new_items)):
+            lines.append(f"Removed {key}: {item}")
+    if lines:
+        sections.append(("Changed Store Monetization", lines))
+
+    return sections
+
+
+def format_store_sections(sections):
+    blocks = ["Store page updated"]
+    for title, lines in sections:
+        blocks.append(title + "\n" + "\n".join(lines))
+    return "\n\n".join(blocks)
 
 
 def retry(func, attempts=3, delay=10):
@@ -210,7 +383,7 @@ def main():
 
     updated = False
     daily = False
-    changed = []
+    store_sections = []
     old_build = None
 
     if not state.get("buildid"):
@@ -236,12 +409,16 @@ def main():
         updated = True
     elif store:
         old_store = state.get("store") or {}
-        changed = [key for key in store if key in old_store and old_store[key] != store[key]]
+        if old_store.get("version") == store["version"]:
+            store_sections = describe_store_changes(old_store, store)
         state["store"] = store
-        if changed:
-            send_message(
-                "Store page updated\n\n" + "\n".join(f"- {key}" for key in changed)
-            )
+        public_sections = [
+            section
+            for section in store_sections
+            if section[0] != "Changed Store Monetization"
+        ]
+        if public_sections:
+            send_message(format_store_sections(public_sections))
         save_state(state)
 
     if now.hour >= DAILY_HOUR and state.get("last_daily") != today:
@@ -268,9 +445,23 @@ def main():
         f"store: {'error' if store_error else 'ok'}",
     ]
     if store:
-        lines.append(f"trailers: {len(store['trailers'])}")
+        lines.append(f"trailers: {len(store['movies'])}")
         lines.append(f"screenshots: {len(store['screenshots'])}")
-    lines.append(f"changed: {', '.join(changed) if changed else 'none'}")
+        lines.append(f"is_free: {display(store['monetization']['is_free'])}")
+        lines.append(f"packages: {len(store['monetization']['packages'])}")
+        lines.append(f"dlc: {len(store['monetization']['dlc'])}")
+        lines.append(f"price: {display_price(store['monetization']['price'])}")
+    lines.append(
+        "changed: "
+        + (
+            ", ".join(title for title, _ in store_sections)
+            if store_sections
+            else "none"
+        )
+    )
+    for title, section_lines in store_sections:
+        if title == "Changed Store Monetization":
+            lines.extend(["", title + "\n" + "\n".join(section_lines)])
     if store_error:
         lines.append(f"store_error: {store_error}")
     lines.extend(
